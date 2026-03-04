@@ -1,0 +1,29 @@
+# Dependencies
+# When you run "npm install", thousands of files get downloaded into this folder.
+# We don't commit them because anyone can re-download them using package.json.
+node_modules/
+
+# Environment variables
+# This file stores secrets like database passwords and API keys.
+# NEVER commit this file -- it would expose your secrets to anyone who sees your repo.
+.env
+
+# Database files
+# The actual database file is generated and can contain user data.
+# We track the setup code, not the data itself.
+*.db
+
+# Operating system files
+# These are hidden files your OS creates automatically. They're useless clutter.
+.DS_Store
+Thumbs.db
+
+# Editor settings
+# Your personal editor configuration. Other developers may use different editors.
+.vscode/
+.idea/
+
+# Build output
+# Generated files from building/compiling your project. Always regenerable.
+dist/
+build/

@@ -1,0 +1,13 @@
+{
+  "name": "task-tracker",
+  "version": "1.0.0",
+  "description": "A simple CRUD web application for managing tasks.",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "keywords": ["learning", "crud", "task-tracker"],
+  "author": "",
+  "license": "ISC"
+}
