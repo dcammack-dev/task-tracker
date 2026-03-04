@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!--
+        The <head> section: INVISIBLE metadata about the page.
+        Nothing here shows up on screen -- it's info FOR the browser.
+    -->
+
+    <!-- Tell the browser to support all characters (letters, symbols, emojis) -->
+    <meta charset="UTF-8">
+
+    <!-- Make the page scale properly on phones and tablets -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- The text that appears in the browser tab -->
+    <title>Task Tracker</title>
+
+    <!-- Link to our CSS file (we'll create this in Module 06) -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!--
+        The <body> section: EVERYTHING the user sees goes here.
+        We use semantic HTML elements to describe the structure.
+    -->
+
+    <!-- ==================== HEADER ==================== -->
+    <!-- The top banner of our app -->
+    <header>
+        <h1>Task Tracker</h1>
+        <p>Manage your tasks efficiently</p>
+    </header>
+
+    <!-- ==================== MAIN CONTENT ==================== -->
+    <!-- The primary content area -->
+    <main>
+
+        <!-- SECTION 1: The form to add new tasks -->
+        <section id="add-task-section">
+            <h2>Add New Task</h2>
+
+            <!--
+                A <form> groups related inputs together.
+                The id attribute gives us a way to reference this form
+                from JavaScript later (Module 07).
+            -->
+            <form id="task-form">
+
+                <!--
+                    Each input has a <label> that describes it.
+                    The "for" attribute on <label> matches the "id" on <input>.
+                    This connection means clicking the label focuses the input
+                    (important for accessibility).
+                -->
+                <div>
+                    <label for="task-title">Title</label>
+                    <input
+                        type="text"
+                        id="task-title"
+                        name="title"
+                        placeholder="What needs to be done?"
+                        required
+                    >
+                </div>
+
+                <!--
+                    <textarea> is like <input> but for multi-line text.
+                    Good for descriptions, comments, or any longer text.
+                -->
+                <div>
+                    <label for="task-description">Description</label>
+                    <textarea
+                        id="task-description"
+                        name="description"
+                        placeholder="Add details about this task..."
+                        rows="3"
+                    ></textarea>
+                </div>
+
+                <!--
+                    <select> creates a dropdown menu.
+                    Each <option> is one choice in the dropdown.
+                    The "value" attribute is what gets sent to the server.
+                    The text between the tags is what the user sees.
+                -->
+                <div>
+                    <label for="task-status">Status</label>
+                    <select id="task-status" name="status">
+                        <option value="pending">Pending</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+
+                <!--
+                    type="submit" means clicking this button submits the form.
+                    We'll handle what "submit" does in JavaScript (Module 07).
+                -->
+                <button type="submit">Add Task</button>
+            </form>
+        </section>
+
+        <!-- SECTION 2: The task list display -->
+        <section id="task-list-section">
+            <h2>Your Tasks</h2>
+
+            <!--
+                This container will be populated by JavaScript later.
+                For now, we'll put some example tasks so we can see
+                the structure and style it with CSS.
+            -->
+            <div id="task-list">
+
+                <!--
+                    Each task is an <article> -- a self-contained piece of
+                    content. This is semantic: an article makes sense on its
+                    own, just like a single task does.
+                -->
+                <article class="task-card" data-status="pending">
+                    <div class="task-header">
+                        <h3 class="task-title">Learn HTML</h3>
+                        <span class="task-status status-pending">Pending</span>
+                    </div>
+                    <p class="task-description">
+                        Understand elements, tags, attributes, and semantic HTML.
+                    </p>
+                    <div class="task-actions">
+                        <button class="btn-edit">Edit</button>
+                        <button class="btn-delete">Delete</button>
+                    </div>
+                </article>
+
+                <article class="task-card" data-status="in-progress">
+                    <div class="task-header">
+                        <h3 class="task-title">Learn CSS</h3>
+                        <span class="task-status status-in-progress">In Progress</span>
+                    </div>
+                    <p class="task-description">
+                        Style the Task Tracker with colors, layout, and spacing.
+                    </p>
+                    <div class="task-actions">
+                        <button class="btn-edit">Edit</button>
+                        <button class="btn-delete">Delete</button>
+                    </div>
+                </article>
+
+                <article class="task-card" data-status="completed">
+                    <div class="task-header">
+                        <h3 class="task-title">Set up project</h3>
+                        <span class="task-status status-completed">Completed</span>
+                    </div>
+                    <p class="task-description">
+                        Initialize Git repo, create folder structure, push to GitHub.
+                    </p>
+                    <div class="task-actions">
+                        <button class="btn-edit">Edit</button>
+                        <button class="btn-delete">Delete</button>
+                    </div>
+                </article>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer>
+        <p>Task Tracker &mdash; Built as a learning project</p>
+    </footer>
+
+    <!-- Link to our JavaScript file (we'll create this in Module 07) -->
+    <script src="js/app.js"></script>
+</body>
+</html>
