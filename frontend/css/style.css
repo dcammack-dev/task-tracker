@@ -74,7 +74,7 @@ h3 {
 /* The top banner with the app title.
    We use a blue gradient background to make it stand out. */
 header {
-    background: linear-gradient(135deg, #2563eb, #1e40af);
+    background: linear-gradient(135deg, #7c3aed, #1e40af);
     color: #fff;
     padding: 24px 32px;
     text-align: center;
@@ -248,8 +248,7 @@ button[type="submit"]:active {
     gap: 8px;
 }
 
-/* Shared styles for Edit and Delete buttons */
-.btn-edit,
+/* Shared styles for action buttons */
 .btn-delete {
     padding: 6px 14px;
     font-size: 0.8rem;
@@ -259,15 +258,15 @@ button[type="submit"]:active {
     transition: background-color 0.2s;
 }
 
-/* Edit button -- outlined style */
-.btn-edit {
+/* Status dropdown in task cards */
+.status-select {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    cursor: pointer;
     background: #fff;
-    color: #2563eb;
-    border: 1px solid #2563eb;
-}
-
-.btn-edit:hover {
-    background: #eff6ff;
+    color: #555;
 }
 
 /* Delete button -- subtle danger style */
@@ -326,4 +325,12 @@ button[type="submit"]:active {
 
 .task-card[data-status="completed"] {
     border-left-color: #16a34a;
+}
+
+/* Empty state message when no tasks exist */
+.empty-message {
+    text-align: center;
+    color: #999;
+    font-style: italic;
+    padding: 32px 0;
 }
