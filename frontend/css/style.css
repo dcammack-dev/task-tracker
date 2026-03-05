@@ -208,6 +208,53 @@ button[type="submit"]:active {
     background: #1e40af;
 }
 
+/* --- TASK LIST HEADER (title + count) --- */
+.task-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.task-count {
+    font-size: 0.85rem;
+    color: #888;
+    font-weight: 500;
+}
+
+/* --- FILTER BAR --- */
+/* Flexbox row of filter buttons with wrapping for small screens */
+.filter-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    padding: 6px 16px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: 1px solid #d1d5db;
+    border-radius: 20px;
+    background: #fff;
+    color: #555;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-btn:hover {
+    border-color: #7c3aed;
+    color: #7c3aed;
+}
+
+/* The active filter button -- filled instead of outlined */
+.filter-btn.active {
+    background: #7c3aed;
+    color: #fff;
+    border-color: #7c3aed;
+}
+
 /* --- TASK CARDS --- */
 /* Each task is displayed as a card with a left border accent.
    The left border color will change based on status. */
@@ -249,6 +296,7 @@ button[type="submit"]:active {
 }
 
 /* Shared styles for action buttons */
+.btn-edit,
 .btn-delete {
     padding: 6px 14px;
     font-size: 0.8rem;
@@ -258,15 +306,15 @@ button[type="submit"]:active {
     transition: background-color 0.2s;
 }
 
-/* Status dropdown in task cards */
-.status-select {
-    padding: 6px 10px;
-    font-size: 0.8rem;
-    border: 1px solid #d1d5db;
-    border-radius: 4px;
-    cursor: pointer;
+/* Edit button -- outlined style */
+.btn-edit {
     background: #fff;
-    color: #555;
+    color: #7c3aed;
+    border: 1px solid #7c3aed;
+}
+
+.btn-edit:hover {
+    background: #f5f3ff;
 }
 
 /* Delete button -- subtle danger style */
@@ -278,6 +326,84 @@ button[type="submit"]:active {
 
 .btn-delete:hover {
     background: #fef2f2;
+}
+
+/* --- EDIT MODE --- */
+/* When a task card is being edited, it gets a highlighted border */
+.task-card.editing {
+    border-left-color: #7c3aed;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.15);
+}
+
+.edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.edit-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.edit-field label {
+    font-size: 0.8rem;
+}
+
+.edit-title,
+.edit-description,
+.edit-status {
+    padding: 8px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-family: inherit;
+}
+
+.edit-title:focus,
+.edit-description:focus,
+.edit-status:focus {
+    outline: none;
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+}
+
+.edit-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-save {
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    background: #7c3aed;
+    color: #fff;
+    border: none;
+    transition: background-color 0.2s;
+}
+
+.btn-save:hover {
+    background: #6d28d9;
+}
+
+.btn-cancel {
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border-radius: 4px;
+    cursor: pointer;
+    background: #fff;
+    color: #666;
+    border: 1px solid #d1d5db;
+    transition: background-color 0.2s;
+}
+
+.btn-cancel:hover {
+    background: #f3f4f6;
 }
 
 /* =============================================================

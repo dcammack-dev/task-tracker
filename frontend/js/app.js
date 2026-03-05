@@ -1,61 +1,95 @@
 // =============================================================
-// TASK TRACKER - JavaScript
+// TASK TRACKER - JavaScript (Module 08: Complete Frontend)
 //
-// This file makes the Task Tracker interactive. It handles:
-//   1. Adding new tasks via the form
-//   2. Deleting tasks
-//   3. Editing task status
-//   4. Storing tasks in an array
-//   5. Rendering tasks to the page
+// Features:
+//   1. Add, edit, delete tasks
+//   2. localStorage persistence (survives page refresh)
+//   3. Filter tasks by status
+//   4. Task count display
 //
-// Key concept: We keep a JavaScript array as our "source of truth"
-// and re-render the HTML from it whenever something changes.
-// This pattern (data -> render -> display) is the foundation of
-// how modern web apps work.
+// Architecture:
+//   - tasks array = source of truth (all data lives here)
+//   - localStorage = persistence layer (saves array as JSON)
+//   - renderTasks() = display layer (builds HTML from array)
+//   - Every user action: modify array -> save -> re-render
 // =============================================================
 
 
 // =============================================================
-// 1. DATA: Our task storage
-//
-// This array holds all our tasks. Each task is an object with
-// properties. Right now tasks live only in memory -- if you
-// refresh the page, they're gone. We'll fix that in Module 08
-// with localStorage, and in Module 11 with a real database.
+// 1. DATA LAYER: Storage and state
 // =============================================================
 
-let tasks = [
-    // Start with some sample tasks so the page isn't empty
-    {
-        id: 1,
-        title: "Learn HTML",
-        description: "Understand elements, tags, attributes, and semantic HTML.",
-        status: "completed"
-    },
-    {
-        id: 2,
-        title: "Learn CSS",
-        description: "Style the Task Tracker with colors, layout, and spacing.",
-        status: "completed"
-    },
-    {
-        id: 3,
-        title: "Learn JavaScript",
-        description: "Make the Task Tracker interactive with DOM manipulation.",
-        status: "in-progress"
+// Load tasks from localStorage, or use sample data if first visit.
+// This is the first thing that runs -- before anything is displayed.
+let tasks = loadTasks();
+
+// Counter for unique IDs. We calculate it from existing tasks so
+// we never accidentally reuse an ID after a page refresh.
+let nextId = tasks.length > 0
+    ? Math.max(...tasks.map(t => t.id)) + 1
+    : 1;
+
+// Track the current filter (which tasks to display)
+let currentFilter = "all";
+
+// Track which task is being edited (null = none)
+let editingTaskId = null;
+
+/**
+ * SAVE tasks to localStorage.
+ * Called every time the tasks array changes.
+ *
+ * JSON.stringify converts our array of objects into a string
+ * because localStorage can only store strings.
+ */
+function saveTasks() {
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+}
+
+/**
+ * LOAD tasks from localStorage.
+ * Called once when the page first loads.
+ *
+ * JSON.parse converts the stored string back into an array.
+ * If nothing is stored yet (first visit), returns sample data.
+ */
+function loadTasks() {
+    const stored = localStorage.getItem("tasks");
+
+    if (stored) {
+        // We have saved data -- parse and return it
+        return JSON.parse(stored);
     }
-];
 
-// This counter ensures every task gets a unique ID.
-// We start at 4 because our sample tasks use 1, 2, 3.
-let nextId = 4;
+    // First visit -- return sample tasks to show how the app works
+    return [
+        {
+            id: 1,
+            title: "Learn HTML",
+            description: "Understand elements, tags, attributes, and semantic HTML.",
+            status: "completed"
+        },
+        {
+            id: 2,
+            title: "Learn CSS",
+            description: "Style the Task Tracker with colors, layout, and spacing.",
+            status: "completed"
+        },
+        {
+            id: 3,
+            title: "Learn JavaScript",
+            description: "Make the Task Tracker interactive with DOM manipulation.",
+            status: "in-progress"
+        }
+    ];
+}
 
 
 // =============================================================
-// 2. DOM REFERENCES: Grab elements we need
+// 2. DOM REFERENCES
 //
-// We select these once when the script loads, then reuse them.
-// This is more efficient than selecting them every time we need them.
+// Grab elements once, reuse everywhere. More efficient than
+// calling getElementById every time we need an element.
 // =============================================================
 
 const taskForm = document.getElementById("task-form");
@@ -63,82 +97,110 @@ const taskTitleInput = document.getElementById("task-title");
 const taskDescriptionInput = document.getElementById("task-description");
 const taskStatusInput = document.getElementById("task-status");
 const taskListContainer = document.getElementById("task-list");
+const taskCountDisplay = document.getElementById("task-count");
+const filterBar = document.getElementById("filter-bar");
 
 
 // =============================================================
-// 3. RENDER FUNCTION: Display tasks on the page
+// 3. RENDER FUNCTION: Data -> HTML
 //
-// This is the most important function. It takes our tasks array
-// and converts it into HTML that the browser displays.
-//
-// The pattern is:
-//   1. Clear the current HTML in the task list
-//   2. Loop through the tasks array
-//   3. For each task, create HTML and add it to the page
-//
-// Every time a task is added, deleted, or changed, we call this
-// function to update what the user sees.
+// This is the core of the app. It reads the tasks array, applies
+// the current filter, and builds the HTML that the user sees.
+// Called after every data change.
 // =============================================================
 
 function renderTasks() {
-    // Step 1: Clear everything currently displayed
-    // We set innerHTML to empty string to wipe the container clean
+    // Clear the display
     taskListContainer.innerHTML = "";
 
-    // Step 2: Check if there are any tasks
-    if (tasks.length === 0) {
-        // Show a friendly message when there are no tasks
+    // Apply the current filter.
+    // If filter is "all", show everything. Otherwise, show only
+    // tasks matching the selected status.
+    const filtered = currentFilter === "all"
+        ? tasks
+        : tasks.filter(task => task.status === currentFilter);
+
+    // Update the task count display
+    updateTaskCount(filtered.length);
+
+    // Empty state
+    if (filtered.length === 0) {
+        const message = tasks.length === 0
+            ? "No tasks yet. Add one above!"
+            : `No ${currentFilter.replace("-", " ")} tasks.`;
+
         taskListContainer.innerHTML = `
-            <p class="empty-message">No tasks yet. Add one above!</p>
+            <p class="empty-message">${message}</p>
         `;
-        return;  // Exit the function early, nothing more to do
+        return;
     }
 
-    // Step 3: Loop through each task and create its HTML
-    tasks.forEach((task) => {
-        // Create the <article> element for this task card
+    // Build a card for each task
+    filtered.forEach(task => {
         const card = document.createElement("article");
         card.className = "task-card";
         card.setAttribute("data-status", task.status);
 
-        // Build the inner HTML using a template literal.
-        // Notice how we use ${task.title}, ${task.description}, etc.
-        // to insert each task's data into the HTML.
-        card.innerHTML = `
-            <div class="task-header">
-                <h3 class="task-title">${task.title}</h3>
-                <span class="task-status status-${task.status}">
-                    ${formatStatus(task.status)}
-                </span>
-            </div>
-            <p class="task-description">${task.description || "No description provided."}</p>
-            <div class="task-actions">
-                <select class="status-select" data-id="${task.id}">
-                    <option value="pending" ${task.status === "pending" ? "selected" : ""}>Pending</option>
-                    <option value="in-progress" ${task.status === "in-progress" ? "selected" : ""}>In Progress</option>
-                    <option value="completed" ${task.status === "completed" ? "selected" : ""}>Completed</option>
-                </select>
-                <button class="btn-delete" data-id="${task.id}">Delete</button>
-            </div>
-        `;
+        // Check if this task is currently being edited
+        if (editingTaskId === task.id) {
+            // EDIT MODE: Show input fields pre-filled with current values
+            card.classList.add("editing");
+            card.innerHTML = `
+                <div class="edit-form">
+                    <div class="edit-field">
+                        <label>Title</label>
+                        <input type="text" class="edit-title" value="${task.title}">
+                    </div>
+                    <div class="edit-field">
+                        <label>Description</label>
+                        <textarea class="edit-description" rows="2">${task.description || ""}</textarea>
+                    </div>
+                    <div class="edit-field">
+                        <label>Status</label>
+                        <select class="edit-status">
+                            <option value="pending" ${task.status === "pending" ? "selected" : ""}>Pending</option>
+                            <option value="in-progress" ${task.status === "in-progress" ? "selected" : ""}>In Progress</option>
+                            <option value="completed" ${task.status === "completed" ? "selected" : ""}>Completed</option>
+                        </select>
+                    </div>
+                    <div class="edit-actions">
+                        <button class="btn-save" data-id="${task.id}">Save</button>
+                        <button class="btn-cancel" data-id="${task.id}">Cancel</button>
+                    </div>
+                </div>
+            `;
+        } else {
+            // VIEW MODE: Show the normal task card
+            card.innerHTML = `
+                <div class="task-header">
+                    <h3 class="task-title">${task.title}</h3>
+                    <span class="task-status status-${task.status}">
+                        ${formatStatus(task.status)}
+                    </span>
+                </div>
+                <p class="task-description">
+                    ${task.description || "No description provided."}
+                </p>
+                <div class="task-actions">
+                    <button class="btn-edit" data-id="${task.id}">Edit</button>
+                    <button class="btn-delete" data-id="${task.id}">Delete</button>
+                </div>
+            `;
+        }
 
-        // Add the card to the task list container
         taskListContainer.appendChild(card);
     });
 
-    // Step 4: Attach event listeners to the newly created buttons
-    // We have to do this AFTER creating the elements because you
-    // can't add listeners to elements that don't exist yet.
+    // Attach event listeners to the newly created elements
     attachTaskEventListeners();
 }
 
 
 // =============================================================
-// 4. HELPER FUNCTION: Format status text for display
-//
-// Converts "in-progress" to "In Progress" for cleaner display.
+// 4. HELPER FUNCTIONS
 // =============================================================
 
+/** Convert status slug to display text */
 function formatStatus(status) {
     const statusMap = {
         "pending": "Pending",
@@ -148,118 +210,145 @@ function formatStatus(status) {
     return statusMap[status] || status;
 }
 
+/** Update the "X tasks" counter */
+function updateTaskCount(count) {
+    const label = count === 1 ? "task" : "tasks";
+    taskCountDisplay.textContent = `${count} ${label}`;
+}
+
 
 // =============================================================
-// 5. EVENT LISTENERS: Respond to user actions
+// 5. EVENT HANDLERS
 // =============================================================
 
-// --- FORM SUBMISSION ---
-// When the user fills out the form and clicks "Add Task"
+// --- FORM SUBMISSION: Add a new task ---
 taskForm.addEventListener("submit", (event) => {
-    // Prevent the default form behavior (which would reload the page)
     event.preventDefault();
 
-    // Read the values from the form inputs
     const title = taskTitleInput.value.trim();
     const description = taskDescriptionInput.value.trim();
     const status = taskStatusInput.value;
 
-    // .trim() removes whitespace from the start and end of a string.
-    // This prevents tasks with titles like "   " (just spaces).
-
-    // Validate: don't allow empty titles
     if (title === "") {
         alert("Please enter a task title.");
-        return;  // Stop here, don't create the task
+        return;
     }
 
-    // Create a new task object
     const newTask = {
-        id: nextId,
+        id: nextId++,
         title: title,
         description: description,
         status: status
     };
 
-    // Increment the ID counter for the next task
-    nextId++;
-
-    // Add the new task to our array
     tasks.push(newTask);
-
-    // Clear the form inputs so the user can add another task
+    saveTasks();        // Persist to localStorage
     taskForm.reset();
-
-    // Re-render the task list to show the new task
     renderTasks();
 
-    // Log to console for debugging (open F12 > Console to see this)
     console.log("Task added:", newTask);
-    console.log("All tasks:", tasks);
 });
 
 
-// --- TASK CARD BUTTONS ---
-// This function attaches event listeners to Delete buttons and
-// Status dropdowns inside task cards. It's called by renderTasks()
-// after new cards are created.
+// --- FILTER BUTTONS ---
+// We listen for clicks on the filter bar container, not individual
+// buttons. This is called "event delegation" -- a single listener
+// on the parent handles clicks for all children. More efficient
+// and works even if buttons are added dynamically.
+filterBar.addEventListener("click", (event) => {
+    // Check if what was clicked is actually a filter button
+    if (!event.target.classList.contains("filter-btn")) {
+        return;  // Clicked the gap between buttons, ignore
+    }
 
+    // Update the active button styling
+    // Remove "active" from all buttons, add to the clicked one
+    filterBar.querySelectorAll(".filter-btn").forEach(btn => {
+        btn.classList.remove("active");
+    });
+    event.target.classList.add("active");
+
+    // Update the filter and re-render
+    currentFilter = event.target.getAttribute("data-filter");
+    renderTasks();
+});
+
+
+// --- TASK CARD BUTTONS (Edit, Delete, Save, Cancel) ---
 function attachTaskEventListeners() {
-    // --- Delete buttons ---
-    // querySelectorAll returns ALL elements matching the selector.
-    // We loop through each one and add a click listener.
-    const deleteButtons = document.querySelectorAll(".btn-delete");
-    deleteButtons.forEach((button) => {
+
+    // DELETE buttons
+    document.querySelectorAll(".btn-delete").forEach(button => {
         button.addEventListener("click", () => {
-            // Read the task ID from the button's data-id attribute.
-            // parseInt converts the string "3" to the number 3.
             const taskId = parseInt(button.getAttribute("data-id"));
 
-            // Remove the task from the array.
-            // .filter() creates a NEW array containing only tasks
-            // whose id does NOT match the one we want to delete.
-            tasks = tasks.filter((task) => task.id !== taskId);
+            // Confirm before deleting (prevents accidental clicks)
+            if (!confirm("Are you sure you want to delete this task?")) {
+                return;
+            }
 
-            // Re-render to update the display
+            tasks = tasks.filter(task => task.id !== taskId);
+            saveTasks();
             renderTasks();
-
             console.log("Task deleted, ID:", taskId);
-            console.log("Remaining tasks:", tasks);
         });
     });
 
-    // --- Status dropdowns ---
-    const statusSelects = document.querySelectorAll(".status-select");
-    statusSelects.forEach((select) => {
-        select.addEventListener("change", () => {
-            const taskId = parseInt(select.getAttribute("data-id"));
-            const newStatus = select.value;
+    // EDIT buttons -- switch a card to edit mode
+    document.querySelectorAll(".btn-edit").forEach(button => {
+        button.addEventListener("click", () => {
+            editingTaskId = parseInt(button.getAttribute("data-id"));
+            renderTasks();  // Re-render shows the edit form
+        });
+    });
 
-            // Find the task in our array and update its status.
-            // .find() returns the first item that matches the condition.
-            const task = tasks.find((t) => t.id === taskId);
-            if (task) {
-                task.status = newStatus;
+    // SAVE buttons -- save edits and return to view mode
+    document.querySelectorAll(".btn-save").forEach(button => {
+        button.addEventListener("click", () => {
+            const taskId = parseInt(button.getAttribute("data-id"));
 
-                // Re-render to update the status badge and border color
-                renderTasks();
+            // Find the edit form inputs (they're in the same card)
+            const card = button.closest(".task-card");
+            const newTitle = card.querySelector(".edit-title").value.trim();
+            const newDescription = card.querySelector(".edit-description").value.trim();
+            const newStatus = card.querySelector(".edit-status").value;
 
-                console.log(`Task ${taskId} status changed to: ${newStatus}`);
+            if (newTitle === "") {
+                alert("Task title cannot be empty.");
+                return;
             }
+
+            // Find the task in the array and update it
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.title = newTitle;
+                task.description = newDescription;
+                task.status = newStatus;
+            }
+
+            editingTaskId = null;   // Exit edit mode
+            saveTasks();
+            renderTasks();
+            console.log("Task updated:", task);
+        });
+    });
+
+    // CANCEL buttons -- exit edit mode without saving
+    document.querySelectorAll(".btn-cancel").forEach(button => {
+        button.addEventListener("click", () => {
+            editingTaskId = null;
+            renderTasks();
         });
     });
 }
 
 
 // =============================================================
-// 6. INITIALIZATION: Run when the page first loads
-//
-// DOMContentLoaded fires when the HTML has been fully parsed.
-// This ensures all elements exist before we try to use them.
+// 6. INITIALIZATION
 // =============================================================
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Render the initial sample tasks
     renderTasks();
     console.log("Task Tracker initialized with", tasks.length, "tasks.");
+    console.log("Data loaded from:", localStorage.getItem("tasks") ? "localStorage" : "default sample data");
 });
