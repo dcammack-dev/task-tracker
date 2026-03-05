@@ -1,3 +1,329 @@
-/* Task Tracker Styles - Module 06 */
-/* This file is intentionally empty for now. */
-/* We'll add styles in the next module. */
+/* =============================================================
+   TASK TRACKER STYLES
+   Organized in sections from global to specific:
+   1. Reset & Global Styles
+   2. Typography
+   3. Layout (Header, Main, Footer)
+   4. Components (Forms, Cards, Buttons)
+   5. Status Badges
+   ============================================================= */
+
+/* =============================================================
+   1. RESET & GLOBAL STYLES
+
+   Browsers apply their own default styles (margins on <body>,
+   different font sizes, etc.). A "reset" overrides these defaults
+   so our design looks the same across all browsers.
+   ============================================================= */
+
+/* The * selector targets EVERY element on the page.
+   box-sizing: border-box makes width include padding + border.
+   This prevents the common bug where padding makes boxes wider
+   than you specified. */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* Set base styles for the entire page.
+   Styles on <body> are inherited by most child elements,
+   so this is where we set our default font and background. */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f0f2f5;
+}
+
+/* =============================================================
+   2. TYPOGRAPHY
+
+   Set consistent heading and text styles across the app.
+   ============================================================= */
+
+h1 {
+    font-size: 1.8rem;     /* rem = relative to root font size (16px) */
+    font-weight: 700;      /* 700 = bold */
+    color: #fff;
+}
+
+h2 {
+    font-size: 1.3rem;
+    font-weight: 600;      /* 600 = semi-bold */
+    color: #333;
+    margin-bottom: 16px;
+}
+
+h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #222;
+}
+
+/* =============================================================
+   3. LAYOUT (Header, Main, Footer)
+
+   These define the overall page structure -- the big sections.
+   ============================================================= */
+
+/* --- HEADER --- */
+/* The top banner with the app title.
+   We use a blue gradient background to make it stand out. */
+header {
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+    color: #fff;
+    padding: 24px 32px;
+    text-align: center;
+}
+
+header p {
+    color: rgba(255, 255, 255, 0.8);   /* White with 80% opacity */
+    font-size: 0.95rem;
+    margin-top: 4px;
+}
+
+/* --- MAIN CONTENT AREA --- */
+/* max-width prevents the content from stretching too wide on big screens.
+   margin: 0 auto centers the container horizontally.
+   This is a very common pattern: constrain width + auto margins = centered. */
+main {
+    max-width: 800px;
+    margin: 32px auto;
+    padding: 0 16px;
+}
+
+/* --- FOOTER --- */
+footer {
+    text-align: center;
+    padding: 24px;
+    color: #888;
+    font-size: 0.85rem;
+    border-top: 1px solid #ddd;
+    margin-top: 48px;
+}
+
+/* =============================================================
+   4. COMPONENTS (Forms, Cards, Buttons)
+
+   Reusable, self-contained pieces of the UI.
+   ============================================================= */
+
+/* --- SECTIONS --- */
+/* Each <section> gets a white card-like background with rounded corners
+   and a subtle shadow to create visual depth. */
+section {
+    background: #fff;
+    border-radius: 8px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* --- FORM --- */
+/* The form uses Flexbox with column direction to stack inputs vertically.
+   gap creates consistent spacing between each form field. */
+#task-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* The <div> wrappers around each label+input pair */
+#task-form > div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* --- LABELS --- */
+label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #555;
+}
+
+/* --- INPUT FIELDS --- */
+/* We style <input>, <textarea>, and <select> with the same base styles
+   so they look consistent. The comma between selectors means "apply to all." */
+input[type="text"],
+textarea,
+select {
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-family: inherit;        /* Use the same font as the rest of the page */
+    color: #333;
+    background-color: #fff;
+    transition: border-color 0.2s;  /* Smooth color change on focus */
+}
+
+/* :focus is a pseudo-class -- it targets the input when a user clicks on it
+   or tabs to it. The outline: none removes the browser's default blue outline
+   and we replace it with our own styled border. */
+input[type="text"]:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* Placeholder text styling */
+input::placeholder,
+textarea::placeholder {
+    color: #9ca3af;
+}
+
+/* Make textarea not resizable horizontally (only vertically) */
+textarea {
+    resize: vertical;
+}
+
+/* --- BUTTONS --- */
+/* The main submit button for the form */
+button[type="submit"] {
+    background: #2563eb;
+    color: #fff;
+    border: none;                 /* Remove default border */
+    padding: 12px 24px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;              /* Shows a hand icon on hover */
+    transition: background-color 0.2s;
+}
+
+/* :hover pseudo-class -- targets the button when the mouse is over it */
+button[type="submit"]:hover {
+    background: #1d4ed8;
+}
+
+/* :active pseudo-class -- targets the button while it's being clicked */
+button[type="submit"]:active {
+    background: #1e40af;
+}
+
+/* --- TASK CARDS --- */
+/* Each task is displayed as a card with a left border accent.
+   The left border color will change based on status. */
+.task-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-left: 4px solid #d1d5db;     /* Accent border on the left */
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 12px;
+    transition: box-shadow 0.2s;
+}
+
+/* Lift effect when hovering over a task card */
+.task-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* The top row of each card: title on the left, status badge on the right.
+   This is Flexbox in action -- space-between pushes them to opposite ends. */
+.task-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+/* Task description text */
+.task-description {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 12px;
+}
+
+/* The Edit/Delete button row */
+.task-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* Shared styles for Edit and Delete buttons */
+.btn-edit,
+.btn-delete {
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+/* Edit button -- outlined style */
+.btn-edit {
+    background: #fff;
+    color: #2563eb;
+    border: 1px solid #2563eb;
+}
+
+.btn-edit:hover {
+    background: #eff6ff;
+}
+
+/* Delete button -- subtle danger style */
+.btn-delete {
+    background: #fff;
+    color: #dc2626;
+    border: 1px solid #dc2626;
+}
+
+.btn-delete:hover {
+    background: #fef2f2;
+}
+
+/* =============================================================
+   5. STATUS BADGES
+
+   Small colored labels that show the task's current status.
+   Each status gets a different color to make scanning easy.
+   ============================================================= */
+
+.task-status {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 12px;       /* Fully rounded = pill shape */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Pending = orange */
+.status-pending {
+    background: #fff7ed;
+    color: #c2410c;
+}
+
+/* In Progress = blue */
+.status-in-progress {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+/* Completed = green */
+.status-completed {
+    background: #f0fdf4;
+    color: #16a34a;
+}
+
+/* Change the left border color of task cards based on status */
+.task-card[data-status="pending"] {
+    border-left-color: #f97316;
+}
+
+.task-card[data-status="in-progress"] {
+    border-left-color: #2563eb;
+}
+
+.task-card[data-status="completed"] {
+    border-left-color: #16a34a;
+}
