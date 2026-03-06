@@ -52,16 +52,20 @@ const queries = {
 // now we're querying a real database.
 //
 router.get("/", (req, res) => {
-    const { status } = req.query;
+    try {
+        const { status } = req.query;
 
-    if (status) {
-        // Parameterized query: the ? is replaced with the status value
-        const tasks = queries.getByStatus.all(status);
-        return res.json(tasks);
+        if (status) {
+            const tasks = queries.getByStatus.all(status);
+            return res.json(tasks);
+        }
+
+        const tasks = queries.getAll.all();
+        res.json(tasks);
+    } catch (error) {
+        console.error("Error fetching tasks:", error.message);
+        res.status(500).json({ error: "Failed to fetch tasks" });
     }
-
-    const tasks = queries.getAll.all();
-    res.json(tasks);
 });
 
 
@@ -72,13 +76,18 @@ router.get("/", (req, res) => {
 // This is different from .all() which returns an array.
 //
 router.get("/:id", (req, res) => {
-    const task = queries.getById.get(req.params.id);
+    try {
+        const task = queries.getById.get(req.params.id);
 
-    if (!task) {
-        return res.status(404).json({ error: "Task not found" });
+        if (!task) {
+            return res.status(404).json({ error: "Task not found" });
+        }
+
+        res.json(task);
+    } catch (error) {
+        console.error("Error fetching task:", error.message);
+        res.status(500).json({ error: "Failed to fetch task" });
     }
-
-    res.json(task);
 });
 
 
@@ -101,17 +110,22 @@ router.post("/", (req, res) => {
     const validStatuses = ["pending", "in-progress", "completed"];
     const taskStatus = validStatuses.includes(status) ? status : "pending";
 
-    // INSERT the new task
-    const result = queries.create.run(
-        title.trim(),
-        (description || "").trim(),
-        taskStatus
-    );
+    try {
+        // INSERT the new task
+        const result = queries.create.run(
+            title.trim(),
+            (description || "").trim(),
+            taskStatus
+        );
 
-    // Fetch the newly created task to return it (with id and created_at)
-    const newTask = queries.getById.get(result.lastInsertRowid);
+        // Fetch the newly created task to return it (with id and created_at)
+        const newTask = queries.getById.get(result.lastInsertRowid);
 
-    res.status(201).json(newTask);
+        res.status(201).json(newTask);
+    } catch (error) {
+        console.error("Error creating task:", error.message);
+        res.status(500).json({ error: "Failed to create task" });
+    }
 });
 
 
@@ -119,38 +133,42 @@ router.post("/", (req, res) => {
 // Updates an existing task in the database.
 //
 router.put("/:id", (req, res) => {
-    // First check if the task exists
-    const existing = queries.getById.get(req.params.id);
+    try {
+        // First check if the task exists
+        const existing = queries.getById.get(req.params.id);
 
-    if (!existing) {
-        return res.status(404).json({ error: "Task not found" });
+        if (!existing) {
+            return res.status(404).json({ error: "Task not found" });
+        }
+
+        const { title, description, status } = req.body;
+
+        // Validate title if provided
+        if (title !== undefined && title.trim() === "") {
+            return res.status(400).json({ error: "Title cannot be empty" });
+        }
+
+        // Use existing values for any fields not provided in the request.
+        const updatedTitle = title !== undefined ? title.trim() : existing.title;
+        const updatedDescription = description !== undefined ? description.trim() : existing.description;
+        const updatedStatus = status !== undefined ? status : existing.status;
+
+        // Validate status
+        const validStatuses = ["pending", "in-progress", "completed"];
+        if (!validStatuses.includes(updatedStatus)) {
+            return res.status(400).json({ error: "Invalid status" });
+        }
+
+        // UPDATE the task
+        queries.update.run(updatedTitle, updatedDescription, updatedStatus, req.params.id);
+
+        // Return the updated task
+        const updatedTask = queries.getById.get(req.params.id);
+        res.json(updatedTask);
+    } catch (error) {
+        console.error("Error updating task:", error.message);
+        res.status(500).json({ error: "Failed to update task" });
     }
-
-    const { title, description, status } = req.body;
-
-    // Validate title if provided
-    if (title !== undefined && title.trim() === "") {
-        return res.status(400).json({ error: "Title cannot be empty" });
-    }
-
-    // Use existing values for any fields not provided in the request.
-    // This allows partial updates (e.g., only changing status).
-    const updatedTitle = title !== undefined ? title.trim() : existing.title;
-    const updatedDescription = description !== undefined ? description.trim() : existing.description;
-    const updatedStatus = status !== undefined ? status : existing.status;
-
-    // Validate status
-    const validStatuses = ["pending", "in-progress", "completed"];
-    if (!validStatuses.includes(updatedStatus)) {
-        return res.status(400).json({ error: "Invalid status" });
-    }
-
-    // UPDATE the task
-    queries.update.run(updatedTitle, updatedDescription, updatedStatus, req.params.id);
-
-    // Return the updated task
-    const updatedTask = queries.getById.get(req.params.id);
-    res.json(updatedTask);
 });
 
 
@@ -158,17 +176,22 @@ router.put("/:id", (req, res) => {
 // Deletes a task from the database.
 //
 router.delete("/:id", (req, res) => {
-    // Check if it exists first (so we can return it)
-    const task = queries.getById.get(req.params.id);
+    try {
+        // Check if it exists first (so we can return it)
+        const task = queries.getById.get(req.params.id);
 
-    if (!task) {
-        return res.status(404).json({ error: "Task not found" });
+        if (!task) {
+            return res.status(404).json({ error: "Task not found" });
+        }
+
+        // DELETE the row
+        queries.delete.run(req.params.id);
+
+        res.json({ message: "Task deleted", task: task });
+    } catch (error) {
+        console.error("Error deleting task:", error.message);
+        res.status(500).json({ error: "Failed to delete task" });
     }
-
-    // DELETE the row
-    queries.delete.run(req.params.id);
-
-    res.json({ message: "Task deleted", task: task });
 });
 
 

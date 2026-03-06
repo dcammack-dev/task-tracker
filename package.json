@@ -5,6 +5,7 @@
   "main": "backend/server.js",
   "scripts": {
     "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js",
     "test": "echo \"No tests yet\" && exit 0"
   },
   "keywords": [
@@ -17,5 +18,8 @@
   "dependencies": {
     "better-sqlite3": "^12.6.2",
     "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
   }
 }

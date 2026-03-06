@@ -104,6 +104,36 @@ app.use("/api/tasks", taskRoutes);
 
 
 // =============================================================
+// ERROR HANDLING
+//
+// These go AFTER all routes. They catch requests that didn't
+// match any route and any errors thrown during request processing.
+// =============================================================
+
+// --- 404 Handler ---
+// If no route matched the request, this middleware runs.
+// It sends a clear JSON error instead of Express's default HTML.
+app.use((req, res) => {
+    res.status(404).json({
+        error: "Not found",
+        message: `No route matches ${req.method} ${req.url}`
+    });
+});
+
+// --- Global Error Handler ---
+// If any route throws an error (or calls next(error)), this catches it.
+// Express recognizes this as an error handler because it has 4 parameters.
+// In production, you'd log to a monitoring service instead of console.
+app.use((err, req, res, next) => {
+    console.error("Server error:", err.message);
+    res.status(500).json({
+        error: "Internal server error",
+        message: "Something went wrong on the server"
+    });
+});
+
+
+// =============================================================
 // START THE SERVER
 //
 // app.listen() tells the server to start accepting connections
