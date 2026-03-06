@@ -1,66 +1,43 @@
 // =============================================================
-// TASK API ROUTES
+// TASK API ROUTES (Database-backed)
 //
-// This file defines all the API endpoints for task operations.
-// It uses an Express Router, which is a mini-app that handles
-// a group of related routes. The server.js file imports this
-// router and mounts it at /api/tasks.
+// These routes now use SQLite instead of a JavaScript array.
+// Each route handler runs a SQL query and returns the result.
 //
-// Endpoints:
-//   GET    /api/tasks       → Get all tasks (with optional filter)
-//   GET    /api/tasks/:id   → Get one task by ID
-//   POST   /api/tasks       → Create a new task
-//   PUT    /api/tasks/:id   → Update an existing task
-//   DELETE /api/tasks/:id   → Delete a task
+// Key change: Data is now PERMANENT. Restarting the server
+// does NOT reset tasks -- they live in the tasks.db file.
+//
+// Notice how each route maps to a SQL command:
+//   GET    → SELECT
+//   POST   → INSERT
+//   PUT    → UPDATE
+//   DELETE → DELETE
 // =============================================================
 
 const express = require("express");
-
-// A Router is like a mini Express app that only handles routes.
-// We define routes on it, then export it for server.js to use.
 const router = express.Router();
 
+// Import the database connection from our setup file
+const db = require("../database/setup");
+
 
 // =============================================================
-// DATA STORAGE (temporary -- Module 11 replaces with database)
+// PREPARED STATEMENTS
 //
-// For now, tasks live in a JavaScript array on the server.
-// This is better than localStorage (server-side, not browser-side)
-// but still temporary -- restarting the server resets everything.
+// We "prepare" our SQL queries once at startup. This is more
+// efficient than building the query string on every request.
+// The ? marks are placeholders for parameterized values
+// (prevents SQL injection).
 // =============================================================
 
-let tasks = [
-    {
-        id: 1,
-        title: "Learn HTML",
-        description: "Understand elements, tags, attributes, and semantic HTML.",
-        status: "completed",
-        createdAt: new Date().toISOString()
-    },
-    {
-        id: 2,
-        title: "Learn CSS",
-        description: "Style the Task Tracker with colors, layout, and spacing.",
-        status: "completed",
-        createdAt: new Date().toISOString()
-    },
-    {
-        id: 3,
-        title: "Learn JavaScript",
-        description: "Make the Task Tracker interactive with DOM manipulation.",
-        status: "completed",
-        createdAt: new Date().toISOString()
-    },
-    {
-        id: 4,
-        title: "Build the API",
-        description: "Create REST endpoints for task CRUD operations.",
-        status: "in-progress",
-        createdAt: new Date().toISOString()
-    }
-];
-
-let nextId = 5;
+const queries = {
+    getAll: db.prepare("SELECT * FROM tasks ORDER BY created_at DESC"),
+    getByStatus: db.prepare("SELECT * FROM tasks WHERE status = ? ORDER BY created_at DESC"),
+    getById: db.prepare("SELECT * FROM tasks WHERE id = ?"),
+    create: db.prepare("INSERT INTO tasks (title, description, status) VALUES (?, ?, ?)"),
+    update: db.prepare("UPDATE tasks SET title = ?, description = ?, status = ? WHERE id = ?"),
+    delete: db.prepare("DELETE FROM tasks WHERE id = ?")
+};
 
 
 // =============================================================
@@ -68,36 +45,36 @@ let nextId = 5;
 // =============================================================
 
 // ----- GET /api/tasks -----
-// Returns all tasks. Supports optional query parameter for filtering:
-//   /api/tasks            → all tasks
-//   /api/tasks?status=pending  → only pending tasks
+// Returns all tasks, optionally filtered by status.
+//
+// .all() returns an array of all matching rows.
+// Compare with the old version that just returned a JS array --
+// now we're querying a real database.
 //
 router.get("/", (req, res) => {
-    // Check for a status filter in the query string
     const { status } = req.query;
 
     if (status) {
-        // Filter tasks by status
-        const filtered = tasks.filter(task => task.status === status);
-        return res.json(filtered);
+        // Parameterized query: the ? is replaced with the status value
+        const tasks = queries.getByStatus.all(status);
+        return res.json(tasks);
     }
 
-    // No filter -- return all tasks
+    const tasks = queries.getAll.all();
     res.json(tasks);
 });
 
 
 // ----- GET /api/tasks/:id -----
-// Returns a single task by its ID.
-// :id is a route parameter -- whatever value is in the URL
-// gets captured in req.params.id.
+// Returns a single task.
+//
+// .get() returns one row (or undefined if not found).
+// This is different from .all() which returns an array.
 //
 router.get("/:id", (req, res) => {
-    const id = parseInt(req.params.id);
-    const task = tasks.find(t => t.id === id);
+    const task = queries.getById.get(req.params.id);
 
     if (!task) {
-        // 404 = the resource was not found
         return res.status(404).json({ error: "Task not found" });
     }
 
@@ -106,19 +83,17 @@ router.get("/:id", (req, res) => {
 
 
 // ----- POST /api/tasks -----
-// Creates a new task. The task data comes in req.body (parsed
-// by the express.json() middleware in server.js).
+// Creates a new task in the database.
 //
-// Validates that a title is provided.
-// Returns the created task with a 201 (Created) status code.
+// .run() executes a query that doesn't return data (INSERT, UPDATE, DELETE).
+// It returns an object with:
+//   - lastInsertRowid: the ID of the newly created row
+//   - changes: how many rows were affected
 //
 router.post("/", (req, res) => {
     const { title, description, status } = req.body;
 
-    // --- VALIDATION ---
-    // Always validate input from the client. Never trust that
-    // the data is correct or complete. This prevents bugs and
-    // is a security best practice.
+    // Validation
     if (!title || title.trim() === "") {
         return res.status(400).json({ error: "Title is required" });
     }
@@ -126,74 +101,75 @@ router.post("/", (req, res) => {
     const validStatuses = ["pending", "in-progress", "completed"];
     const taskStatus = validStatuses.includes(status) ? status : "pending";
 
-    // --- CREATE THE TASK ---
-    const newTask = {
-        id: nextId++,
-        title: title.trim(),
-        description: (description || "").trim(),
-        status: taskStatus,
-        createdAt: new Date().toISOString()
-    };
+    // INSERT the new task
+    const result = queries.create.run(
+        title.trim(),
+        (description || "").trim(),
+        taskStatus
+    );
 
-    tasks.push(newTask);
+    // Fetch the newly created task to return it (with id and created_at)
+    const newTask = queries.getById.get(result.lastInsertRowid);
 
-    // 201 = Created (more specific than 200 OK)
     res.status(201).json(newTask);
 });
 
 
 // ----- PUT /api/tasks/:id -----
-// Updates an existing task. Only updates the fields that are
-// provided in the request body -- other fields stay unchanged.
+// Updates an existing task in the database.
 //
 router.put("/:id", (req, res) => {
-    const id = parseInt(req.params.id);
-    const task = tasks.find(t => t.id === id);
+    // First check if the task exists
+    const existing = queries.getById.get(req.params.id);
 
-    if (!task) {
+    if (!existing) {
         return res.status(404).json({ error: "Task not found" });
     }
 
     const { title, description, status } = req.body;
 
-    // Validate title if it's being updated
+    // Validate title if provided
     if (title !== undefined && title.trim() === "") {
         return res.status(400).json({ error: "Title cannot be empty" });
     }
 
-    // Update only the fields that were provided.
-    // If a field wasn't sent, keep the existing value.
-    if (title !== undefined) task.title = title.trim();
-    if (description !== undefined) task.description = description.trim();
-    if (status !== undefined) {
-        const validStatuses = ["pending", "in-progress", "completed"];
-        if (validStatuses.includes(status)) {
-            task.status = status;
-        }
+    // Use existing values for any fields not provided in the request.
+    // This allows partial updates (e.g., only changing status).
+    const updatedTitle = title !== undefined ? title.trim() : existing.title;
+    const updatedDescription = description !== undefined ? description.trim() : existing.description;
+    const updatedStatus = status !== undefined ? status : existing.status;
+
+    // Validate status
+    const validStatuses = ["pending", "in-progress", "completed"];
+    if (!validStatuses.includes(updatedStatus)) {
+        return res.status(400).json({ error: "Invalid status" });
     }
 
-    res.json(task);
+    // UPDATE the task
+    queries.update.run(updatedTitle, updatedDescription, updatedStatus, req.params.id);
+
+    // Return the updated task
+    const updatedTask = queries.getById.get(req.params.id);
+    res.json(updatedTask);
 });
 
 
 // ----- DELETE /api/tasks/:id -----
-// Deletes a task by its ID.
-// Returns the deleted task so the frontend knows what was removed.
+// Deletes a task from the database.
 //
 router.delete("/:id", (req, res) => {
-    const id = parseInt(req.params.id);
-    const taskIndex = tasks.findIndex(t => t.id === id);
+    // Check if it exists first (so we can return it)
+    const task = queries.getById.get(req.params.id);
 
-    if (taskIndex === -1) {
+    if (!task) {
         return res.status(404).json({ error: "Task not found" });
     }
 
-    // splice removes the item from the array and returns it
-    const deleted = tasks.splice(taskIndex, 1)[0];
+    // DELETE the row
+    queries.delete.run(req.params.id);
 
-    res.json({ message: "Task deleted", task: deleted });
+    res.json({ message: "Task deleted", task: task });
 });
 
 
-// Export the router so server.js can use it
 module.exports = router;
