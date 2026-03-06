@@ -7,7 +7,14 @@
     "start": "node backend/server.js",
     "test": "echo \"No tests yet\" && exit 0"
   },
-  "keywords": ["learning", "crud", "task-tracker"],
+  "keywords": [
+    "learning",
+    "crud",
+    "task-tracker"
+  ],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
 }
