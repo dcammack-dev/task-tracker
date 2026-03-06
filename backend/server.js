@@ -19,8 +19,10 @@
 // require() loads a package so we can use it.
 // "express" comes from the node_modules folder (installed via npm).
 // "path" is a built-in Node.js module for working with file paths.
+// The task routes are our own file (loaded with a relative path "./").
 const express = require("express");
 const path = require("path");
+const taskRoutes = require("./routes/tasks");
 
 
 // --- CREATE THE APP ---
@@ -79,12 +81,16 @@ app.use(express.static(path.join(__dirname, "..", "frontend")));
 // =============================================================
 // ROUTES
 //
-// For now, we just have one route that confirms the API is working.
-// In Module 10, we'll add full CRUD routes for tasks.
+// app.use("/api/tasks", taskRoutes) means:
+//   "For any request starting with /api/tasks, use the routes
+//    defined in routes/tasks.js"
+//
+// Inside tasks.js, routes are defined relative to this prefix.
+// So router.get("/") actually handles GET /api/tasks,
+// and router.get("/:id") handles GET /api/tasks/:id.
 // =============================================================
 
-// A simple health check endpoint.
-// Visit http://localhost:3000/api/health to test.
+// Health check endpoint
 app.get("/api/health", (req, res) => {
     res.json({
         status: "ok",
@@ -92,6 +98,9 @@ app.get("/api/health", (req, res) => {
         timestamp: new Date().toISOString()
     });
 });
+
+// Task CRUD routes (defined in routes/tasks.js)
+app.use("/api/tasks", taskRoutes);
 
 
 // =============================================================
