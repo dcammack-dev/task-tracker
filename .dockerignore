@@ -1,0 +1,22 @@
+# Dependencies -- will be installed fresh inside the container
+node_modules/
+
+# Database files -- container will create its own
+*.db
+*.db-shm
+*.db-wal
+
+# Git history -- not needed in the container
+.git/
+
+# Environment files -- secrets should NOT be baked into images
+.env
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Dev tools config
+nodemon.json

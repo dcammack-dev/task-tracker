@@ -1,0 +1,33 @@
+# =============================================================
+# DOCKER COMPOSE - Task Tracker
+#
+# Defines how to run our app as a container with one command.
+# The volume ensures our database survives container restarts.
+#
+# Usage:
+#   docker compose up       Start the app
+#   docker compose down     Stop the app
+#   docker compose up -d    Start in background (detached)
+# =============================================================
+
+services:
+  app:
+    # Build the image using our Dockerfile in the current directory
+    build: .
+
+    # Map host port 3000 to container port 3000
+    ports:
+      - "3000:3000"
+
+    # Set environment variables inside the container
+    environment:
+      - PORT=3000
+
+    # Mount a named volume so the database persists
+    # even if the container is deleted and recreated
+    volumes:
+      - task-data:/app/backend/database
+
+# Named volumes -- Docker manages the storage location
+volumes:
+  task-data:
