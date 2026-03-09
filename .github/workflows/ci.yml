@@ -1,0 +1,49 @@
+# =============================================================
+# CI WORKFLOW
+#
+# This workflow runs automatically when code is pushed to master
+# or when a pull request targets master.
+#
+# It verifies that:
+#   1. Dependencies install successfully
+#   2. The app can start and respond to requests (smoke test)
+#   3. Tests pass (when we add them in Module 18)
+# =============================================================
+
+name: CI
+
+# When to run
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+# What to do
+jobs:
+  build-and-test:
+    # Run on a fresh Ubuntu Linux machine
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out our code from the repo
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Install Node.js 24
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: npm install
+
+      # Step 4: Run tests
+      - name: Run tests
+        run: npm test
+
+      # Step 5: Run smoke test (start server, hit endpoints, verify)
+      - name: Run smoke test
+        run: npm run smoke-test
