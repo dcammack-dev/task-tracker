@@ -205,6 +205,7 @@ async function renderTasks() {
                 <p class="task-description">
                     ${task.description || "No description provided."}
                 </p>
+                <span class="task-date">Created ${formatDate(task.created_at)}</span>
                 <div class="task-actions">
                     <button class="btn-edit" data-id="${task.id}">Edit</button>
                     <button class="btn-delete" data-id="${task.id}">Delete</button>
@@ -235,6 +236,15 @@ function formatStatus(status) {
 function updateTaskCount(count) {
     const label = count === 1 ? "task" : "tasks";
     taskCountDisplay.textContent = `${count} ${label}`;
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric"
+    });
 }
 
 
