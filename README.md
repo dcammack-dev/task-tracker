@@ -1,5 +1,7 @@
 # Task Tracker
 
+![CI](https://github.com/dcammack-dev/task-tracker/actions/workflows/ci.yml/badge.svg)
+
 A simple CRUD web application for managing tasks. Built as a learning project
 to practice full-stack web development.
 
