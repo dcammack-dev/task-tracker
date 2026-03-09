@@ -7,7 +7,7 @@
 # It verifies that:
 #   1. Dependencies install successfully
 #   2. The app can start and respond to requests (smoke test)
-#   3. Tests pass (when we add them in Module 18)
+#   3. Tests pass (API integration tests)
 # =============================================================
 
 name: CI
