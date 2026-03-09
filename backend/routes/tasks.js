@@ -107,6 +107,14 @@ router.post("/", (req, res) => {
         return res.status(400).json({ error: "Title is required" });
     }
 
+    if (title.length > 200) {
+        return res.status(400).json({ error: "Title too long (max 200 characters)" });
+    }
+
+    if (description && description.length > 1000) {
+        return res.status(400).json({ error: "Description too long (max 1000 characters)" });
+    }
+
     const validStatuses = ["pending", "in-progress", "completed"];
     const taskStatus = validStatuses.includes(status) ? status : "pending";
 

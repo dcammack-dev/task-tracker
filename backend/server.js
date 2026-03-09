@@ -23,6 +23,8 @@
 // The task routes are our own file (loaded with a relative path "./").
 const express = require("express");
 const path = require("path");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
 const config = require("./config");
 const taskRoutes = require("./routes/tasks");
 
@@ -58,14 +60,31 @@ app.use((req, res, next) => {
     next();
 });
 
-// --- MIDDLEWARE 2: JSON Body Parser ---
+// --- MIDDLEWARE 2: Security Headers (Helmet) ---
+// Helmet sets HTTP response headers that tell browsers how to behave
+// securely. One line adds protection against many common attacks:
+// clickjacking, MIME sniffing, XSS, and more.
+app.use(helmet());
+
+// --- MIDDLEWARE 3: Rate Limiting ---
+// Limits each IP address to a maximum number of API requests per
+// time window. Prevents abuse, brute-force attacks, and accidental
+// denial-of-service from misbehaving clients.
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,  // 15 minutes
+    max: 100,                   // max 100 requests per window per IP
+    message: { error: "Too many requests, please try again later" }
+});
+app.use("/api/", apiLimiter);
+
+// --- MIDDLEWARE 4: JSON Body Parser ---
 // When the frontend sends JSON data (like a new task), this
 // middleware reads the raw text and converts it into a JavaScript
 // object available at req.body.
 // Without this, req.body would be undefined for POST/PUT requests.
 app.use(express.json());
 
-// --- MIDDLEWARE 3: Static File Server ---
+// --- MIDDLEWARE 5: Static File Server ---
 // This tells Express to serve any file found in the "frontend"
 // folder. When someone visits http://localhost:3000/, Express
 // automatically looks for frontend/index.html and sends it.
