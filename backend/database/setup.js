@@ -11,12 +11,13 @@
 // =============================================================
 
 const Database = require("better-sqlite3");
-const path = require("path");
+const config = require("../config");
 
 // --- DATABASE FILE PATH ---
-// The database file lives in this same folder: backend/database/tasks.db
-// path.join builds the full path from this file's location.
-const DB_PATH = path.join(__dirname, "tasks.db");
+// The path now comes from centralized config (which reads from .env).
+// This means we can use a different database file for testing,
+// production, or any other environment -- without changing code.
+const DB_PATH = config.dbPath;
 
 // --- CONNECT TO DATABASE ---
 // This opens the database file (or creates it if it doesn't exist).

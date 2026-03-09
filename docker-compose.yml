@@ -19,9 +19,13 @@ services:
     ports:
       - "3000:3000"
 
-    # Set environment variables inside the container
+    # Set environment variables inside the container.
+    # In Docker, NODE_ENV is typically "production" since
+    # the container IS the production environment.
     environment:
       - PORT=3000
+      - NODE_ENV=production
+      - DATABASE_PATH=./backend/database/tasks.db
 
     # Mount a named volume so the database persists
     # even if the container is deleted and recreated

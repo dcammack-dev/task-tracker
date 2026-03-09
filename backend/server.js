@@ -19,9 +19,11 @@
 // require() loads a package so we can use it.
 // "express" comes from the node_modules folder (installed via npm).
 // "path" is a built-in Node.js module for working with file paths.
+// "config" is our centralized configuration (reads from .env file).
 // The task routes are our own file (loaded with a relative path "./").
 const express = require("express");
 const path = require("path");
+const config = require("./config");
 const taskRoutes = require("./routes/tasks");
 
 
@@ -33,10 +35,9 @@ const app = express();
 
 
 // --- CONFIGURATION ---
-// The port the server will listen on. We check for an environment
-// variable first (process.env.PORT), which is how hosting platforms
-// tell your app which port to use. If none is set, default to 3000.
-const PORT = process.env.PORT || 3000;
+// All settings come from backend/config.js, which reads from the
+// .env file. No more scattered process.env calls.
+const PORT = config.port;
 
 
 // =============================================================
@@ -144,6 +145,7 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
     console.log("===========================================");
     console.log("  Task Tracker Server");
+    console.log(`  Environment: ${config.nodeEnv}`);
     console.log(`  Running at: http://localhost:${PORT}`);
     console.log("  Press Ctrl+C to stop");
     console.log("===========================================");
